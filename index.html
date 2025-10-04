@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Multi-Perfil</title>
+    <style>
+        /* ==================================================
+           ESTILOS GLOBAIS E RESET
+           ================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Tema escuro (padrão) */
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #25283b;
+            --bg-tertiary: #1a1b26;
+            --text-primary: #e0e0ff;
+            --text-secondary: #a9b7d0;
+            --accent-blue: #6d87d9;
+            --accent-purple: #9d7fe6;
+            --accent-green: #5ad18c;
+            --accent-red: #ff6b6b;
+            --border-radius: 16px;
+            --button-bg: #2d3047;
+            --button-hover: #3a3e5a;
+            --display-bg: #161722;
+            --profile-indicator: #5ad18c;
+        }
+
+        .theme-light {
+            /* Tema claro */
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f3f5;
+            --text-primary: #212529;
+            --text-secondary: #495057;
+            --accent-blue: #4a6cf7;
+            --accent-purple: #8a5cf6;
+            --accent-green: #2d8c59;
+            --accent-red: #e53e3e;
+            --border-radius: 16px;
+            --button-bg: #e9ecef;
+            --button-hover: #dee2e6;
+            --display-bg: #ffffff;
+            --profile-indicator: #2d8c59;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        /* ==================================================
+           CONTAINER PRINCIPAL
+           ================================================== */
+        .calculator-container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* ==================================================
+           CABEÇALHO COM SELETOR DE PERFIL
+           ================================================== */
+        .profile-selector {
+            display: flex;
+            background: var(--bg-tertiary);
+            padding: 12px;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .profile-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px 12px;
+            background: var(--button-bg);
+            border: none;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .profile-btn:hover {
+            background: var(--button-hover);
+            transform: translateY(-2px);
+        }
+
+        .profile-btn.active {
+            background: var(--profile-indicator);
+            color: white;
+            box-shadow: 0 0 15px rgba(90, 209, 140, 0.4);
+        }
+
+        /* ==================================================
+           VISOR DA CALCULADORA
+           ================================================== */
+        .display {
+            background: var(--display-bg);
+            padding: 24px 20px;
+            text-align: right;
+            position: relative;
+        }
+
+        .expression {
+            color: var(--text-secondary);
+            font-size: 16px;
+            min-height: 24px;
+            margin-bottom: 8px;
+            word-break: break-all;
+            overflow: hidden;
+        }
+
+        .result {
+            color: var(--text-primary);
+            font-size: 32px;
+            font-weight: 700;
+            min-height: 48px;
+            word-break: break-all;
+            transition: all 0.2s ease;
+        }
+
+        /* ==================================================
+           BOTÕES
+           ================================================== */
+        .buttons-grid {
+            display: grid;
+            gap: 12px;
+            padding: 20px;
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .button {
+            padding: 16px 0;
+            background: var(--button-bg);
+            border: none;
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .button:hover::after {
+            left: 100%;
+        }
+
+        .button:hover {
+            background: var(--button-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Estilos por tipo de botão */
+        .number {
+            color: var(--text-primary);
+        }
+
+        .operator {
+            color: var(--accent-purple);
+            font-weight: 700;
+        }
+
+        .function {
+            color: var(--accent-blue);
+            font-size: 14px;
+        }
+
+        .equals {
+            background: var(--accent-green);
+            color: white;
+            grid-column: span 2;
+        }
+
+        .clear, .delete {
+            color: var(--accent-red);
+        }
+
+        /* ==================================================
+           CONTROLES ADICIONAIS
+           ================================================== */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 20px 12px;
+            background: var(--bg-tertiary);
+        }
+
+        .theme-toggle {
+            background: var(--button-bg);
+            border: none;
+            border-radius: 12px;
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--button-hover);
+        }
+
+        /* ==================================================
+           ANIMAÇÕES
+           ================================================== */
+        @keyframes digit {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .digit-animation {
+            animation: digit 0.15s ease-out;
+        }
+
+        /* ==================================================
+           RESPONSIVIDADE
+           ================================================== */
+        @media (max-width: 480px) {
+            .buttons-grid {
+                gap: 10px;
+                padding: 16px;
+            }
+            
+            .button {
+                padding: 14px 0;
+                font-size: 16px;
+            }
+            
+            .function {
+                font-size: 12px;
+            }
+            
+            .result {
+                font-size: 28px;
+            }
+            
+            .profile-btn {
+                min-width: 60px;
+                font-size: 11px;
+                padding: 6px 8px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .button {
+                padding: 12px 0;
+                font-size: 14px;
+            }
+            
+            .result {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <div class="profile-selector">
+            <button class="profile-btn active" data-profile="basic">Básica</button>
+            <button class="profile-btn" data-profile="scientific">Científica</button>
+            <button class="profile-btn" data-profile="financial">Financeira</button>
+            <button class="profile-btn" data-profile="statistical">Estatística</button>
+        </div>
+        
+        <div class="display">
+            <div class="expression" id="expression"></div>
+            <div class="result" id="result">0</div>
+        </div>
+        
+        <div class="buttons-grid" id="buttons-grid">
+            <!-- Botões serão gerados dinamicamente pelo JavaScript -->
+        </div>
+        
+        <div class="controls">
+            <button class="theme-toggle" id="theme-toggle">🌓 Tema</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================================================
+        // CALCULADORA MULTI-PERFIL - LÓGICA PRINCIPAL
+        // ==================================================
+
+        // Estado da aplicação
+        const state = {
+            currentInput: '0',
+            expression: '',
+            previousResult: null,
+            waitingForOperand: false,
+            currentProfile: 'basic',
+            isDarkTheme: true,
+            // Dados para modo estatístico
+            statisticalData: []
+        };
+
+        // Elementos do DOM
+        const elements = {
+            expression: document.getElementById('expression'),
+            result: document.getElementById('result'),
+            buttonsGrid: document.getElementById('buttons-grid'),
+            profileButtons: document.querySelectorAll('.profile-btn'),
+            themeToggle: document.getElementById('theme-toggle')
+        };
+
+        // ==================================================
+        // DEFINIÇÃO DOS BOTÕES POR PERFIL
+        // ==================================================
+
+        const buttonLayouts = {
+            basic: [
+                ['C', '±', '%', '÷'],
+                ['7', '8', '9', '×'],
+                ['4', '5', '6', '−'],
+                ['1', '2', '3', '+'],
+                ['0', '.', '=', '']
+            ],
+            scientific: [
+                ['C', '(', ')', '÷'],
+                ['7', '8', '9', '×'],
+                ['4', '5', '6', '−'],
+                ['1', '2', '3', '+'],
+                ['0', '.', '=', '⌫'],
+                ['π', 'e', '√', 'x²'],
+                ['xʸ', 'log', 'ln', '!'],
+                ['sin', 'cos', 'tan', '']
+            ],
+            financial: [
+                ['C', 'J₁', 'Jₙ', '÷'],
+                ['7', '8', '9', '×'],
+                ['4', '5', '6', '−'],
+                ['1', '2', '3', '+'],
+                ['0', '.', '=', '⌫'],
+                ['PV', 'FV', 'i%', 'n'],
+                ['PMT', 'AMORT', 'CONV', '']
+            ],
+            statistical: [
+                ['C', 'Σ', 'x̄', '÷'],
+                ['7', '8', '9', '×'],
+                ['4', '5', '6', '−'],
+                ['1', '2', '3', '+'],
+                ['0', '.', '=', '⌫'],
+                ['Med', 'Mod', 'σ', 'Var'],
+                ['Count', 'Prob', 'Clear', '']
+            ]
+        };
+
+        // ==================================================
+        // FUNÇÕES DE UTILIDADE
+        // ==================================================
+
+        // Formata número para exibição
+        function formatNumber(num) {
+            if (typeof num !== 'number' || isNaN(num)) return '0';
+            
+            // Trata números muito grandes ou pequenos
+            if (Math.abs(num) > 999999999 || (Math.abs(num) < 0.000001 && num !== 0)) {
+                return num.toExponential(6);
+            }
+            
+            // Remove zeros desnecessários
+            const str = num.toString();
+            if (str.includes('.') && str.split('.')[1].length > 10) {
+                return parseFloat(num.toFixed(10)).toString();
+            }
+            
+            return str;
+        }
+
+        // Atualiza o visor
+        function updateDisplay() {
+            elements.expression.textContent = state.expression;
+            elements.result.textContent = formatNumber(parseFloat(state.currentInput)) || '0';
+            
+            // Animação suave
+            elements.result.classList.add('digit-animation');
+            setTimeout(() => {
+                elements.result.classList.remove('digit-animation');
+            }, 150);
+        }
+
+        // Limpa o estado atual
+        function clearAll() {
+            state.currentInput = '0';
+            state.expression = '';
+            state.waitingForOperand = false;
+            state.statisticalData = [];
+            updateDisplay();
+        }
+
+        // Alterna sinal do número
+        function toggleSign() {
+            if (state.currentInput === '0') return;
+            
+            if (state.currentInput.startsWith('-')) {
+                state.currentInput = state.currentInput.slice(1);
+            } else {
+                state.currentInput = '-' + state.currentInput;
+            }
+            updateDisplay();
+        }
+
+        // Calcula percentual
+        function calculatePercentage() {
+            const current = parseFloat(state.currentInput);
+            if (isNaN(current)) return;
+            
+            state.currentInput = (current / 100).toString();
+            updateDisplay();
+        }
+
+        // Deleta último caractere
+        function deleteLast() {
+            if (state.currentInput.length === 1 || 
+                (state.currentInput.length === 2 && state.currentInput.startsWith('-'))) {
+                state.currentInput = '0';
+            } else {
+                state.currentInput = state.currentInput.slice(0, -1);
+            }
+            updateDisplay();
+        }
+
+        // ==================================================
+        // FUNÇÕES MATEMÁTICAS AVANÇADAS
+        // ==================================================
+
+        // Funções científicas
+        const scientificFunctions = {
+            'π': () => Math.PI,
+            'e': () => Math.E,
+            '√': (x) => x >= 0 ? Math.sqrt(x) : NaN,
+            'x²': (x) => x * x,
+            'xʸ': (base, exp) => Math.pow(base, exp),
+            'log': (x) => x > 0 ? Math.log10(x) : NaN,
+            'ln': (x) => x > 0 ? Math.log(x) : NaN,
+            'sin': (x) => Math.sin(x * Math.PI / 180),
+            'cos': (x) => Math.cos(x * Math.PI / 180),
+            'tan': (x) => Math.tan(x * Math.PI / 180),
+            '!': (n) => {
+                if (n < 0 || !Number.isInteger(n)) return NaN;
+                let result = 1;
+                for (let i = 2; i <= n; i++) result *= i;
+                return result;
+            }
+        };
+
+        // Funções financeiras (simplificadas para demonstração)
+        const financialFunctions = {
+            // Juros simples: J = C * i * t
+            'J₁': () => {
+                // Para demonstração, usa valores fixos
+                return 100 * 0.05 * 1; // R$100, 5%, 1 período
+            },
+            // Juros compostos: M = C * (1 + i)^t
+            'Jₙ': () => {
+                return 100 * Math.pow(1 + 0.05, 1);
+            },
+            'PV': () => 1000, // Valor presente
+            'FV': () => 1050, // Valor futuro
+            'i%': () => 5,    // Taxa de juros
+            'n': () => 12,    // Número de períodos
+            'PMT': () => 87.5, // Pagamento mensal
+            'AMORT': () => 83.33, // Amortização
+            'CONV': () => 5.25 // Conversão USD/BRL
+        };
+
+        // Funções estatísticas
+        const statisticalFunctions = {
+            'Σ': (data) => data.reduce((sum, val) => sum + val, 0),
+            'x̄': (data) => data.length ? statisticalFunctions['Σ'](data) / data.length : 0,
+            'Med': (data) => {
+                if (data.length === 0) return 0;
+                const sorted = [...data].sort((a, b) => a - b);
+                const mid = Math.floor(sorted.length / 2);
+                return sorted.length % 2 === 0 
+                    ? (sorted[mid - 1] + sorted[mid]) / 2 
+                    : sorted[mid];
+            },
+            'Mod': (data) => {
+                if (data.length === 0) return 0;
+                const frequency = {};
+                let maxCount = 0;
+                let mode = data[0];
+                
+                data.forEach(val => {
+                    frequency[val] = (frequency[val] || 0) + 1;
+                    if (frequency[val] > maxCount) {
+                        maxCount = frequency[val];
+                        mode = val;
+                    }
+                });
+                
+                return mode;
+            },
+            'σ': (data) => {
+                if (data.length <= 1) return 0;
+                const mean = statisticalFunctions['x̄'](data);
+                const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (data.length - 1);
+                return Math.sqrt(variance);
+            },
+            'Var': (data) => {
+                if (data.length <= 1) return 0;
+                const mean = statisticalFunctions['x̄'](data);
+                return data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (data.length - 1);
+            },
+            'Count': (data) => data.length,
+            'Prob': (data) => data.length ? 1 / data.length : 0
+        };
+
+        // ==================================================
+        // LÓGICA DE CÁLCULO POR PERFIL
+        // ==================================================
+
+        function handleBasicOperation(value) {
+            if (value === 'C') {
+                clearAll();
+            } else if (value === '±') {
+                toggleSign();
+            } else if (value === '%') {
+                calculatePercentage();
+            } else if (value === '⌫') {
+                deleteLast();
+            } else if (value === '=') {
+                try {
+                    // Avalia a expressão completa
+                    const fullExpression = state.expression + state.currentInput;
+                    const result = eval(fullExpression
+                        .replace(/×/g, '*')
+                        .replace(/÷/g, '/')
+                        .replace(/−/g, '-'));
+                    
+                    state.previousResult = result;
+                    state.currentInput = result.toString();
+                    state.expression = '';
+                    state.waitingForOperand = true;
+                } catch (error) {
+                    state.currentInput = 'Erro';
+                    state.expression = '';
+                    setTimeout(clearAll, 2000);
+                }
+                updateDisplay();
+            } else if (['+', '−', '×', '÷'].includes(value)) {
+                if (state.waitingForOperand) {
+                    state.expression = state.expression.slice(0, -1);
+                }
+                state.expression += state.currentInput + value;
+                state.waitingForOperand = true;
+                state.currentInput = '0';
+                updateDisplay();
+            } else if (value === '.') {
+                if (state.currentInput === '0') {
+                    state.currentInput = '0.';
+                } else if (!state.currentInput.includes('.')) {
+                    state.currentInput += '.';
+                }
+                updateDisplay();
+            } else if (!isNaN(value) || value === '0') {
+                if (state.currentInput === '0' || state.waitingForOperand) {
+                    state.currentInput = value;
+                    state.waitingForOperand = false;
+                } else {
+                    state.currentInput += value;
+                }
+                updateDisplay();
+            }
+        }
+
+        function handleScientificOperation(value) {
+            if (['C', '±', '%', '⌫', '=', '+', '−', '×', '÷', '.', '(', ')'].includes(value)) {
+                handleBasicOperation(value);
+            } else if (Object.keys(scientificFunctions).includes(value)) {
+                const current = parseFloat(state.currentInput);
+                let result;
+                
+                if (value === 'xʸ') {
+                    // Para potência, armazena o valor base e espera o expoente
+                    state.expression = state.currentInput + '^';
+                    state.waitingForOperand = true;
+                    state.currentInput = '0';
+                } else if (value === '√' || value === 'x²' || value === 'log' || value === 'ln' || 
+                          value === 'sin' || value === 'cos' || value === 'tan' || value === '!') {
+                    result = scientificFunctions[value](current);
+                    if (isNaN(result)) {
+                        state.currentInput = 'Erro';
+                        setTimeout(clearAll, 2000);
+                    } else {
+                        state.currentInput = result.toString();
+                        state.expression = '';
+                    }
+                } else {
+                    // Constantes π e e
+                    state.currentInput = scientificFunctions[value]().toString();
+                    state.expression = '';
+                }
+                updateDisplay();
+            } else if (!isNaN(value) || value === '0') {
+                handleBasicOperation(value);
+            }
+        }
+
+        function handleFinancialOperation(value) {
+            if (['C', '⌫', '=', '+', '−', '×', '÷', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(value)) {
+                handleBasicOperation(value);
+            } else if (Object.keys(financialFunctions).includes(value)) {
+                const result = financialFunctions[value]();
+                state.currentInput = result.toString();
+                state.expression = value + ' =';
+                updateDisplay();
+            }
+        }
+
+        function handleStatisticalOperation(value) {
+            if (value === 'Clear') {
+                state.statisticalData = [];
+                clearAll();
+                return;
+            }
+            
+            if (['C', '⌫', '=', '+', '−', '×', '÷', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(value)) {
+                if (!isNaN(value) && value !== '.') {
+                    // Adiciona número aos dados estatísticos
+                    state.statisticalData.push(parseFloat(value));
+                    state.expression = `Dados: [${state.statisticalData.join(', ')}]`;
+                }
+                handleBasicOperation(value);
+            } else if (Object.keys(statisticalFunctions).includes(value)) {
+                if (state.statisticalData.length === 0) {
+                    state.currentInput = 'Sem dados';
+                    setTimeout(() => {
+                        state.currentInput = '0';
+                        updateDisplay();
+                    }, 2000);
+                    return;
+                }
+                
+                const result = statisticalFunctions[value](state.statisticalData);
+                state.currentInput = formatNumber(result);
+                state.expression = `${value} =`;
+                updateDisplay();
+            }
+        }
+
+        // ==================================================
+        // GERENCIAMENTO DE PERFIL
+        // ==================================================
+
+        function switchProfile(profile) {
+            // Atualiza estado
+            state.currentProfile = profile;
+            state.statisticalData = [];
+            
+            // Atualiza botões de perfil
+            elements.profileButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.profile === profile);
+            });
+            
+            // Gera botões para o perfil selecionado
+            generateButtons();
+            
+            // Limpa display
+            clearAll();
+        }
+
+        function generateButtons() {
+            const layout = buttonLayouts[state.currentProfile];
+            elements.buttonsGrid.innerHTML = '';
+            
+            layout.forEach(row => {
+                row.forEach(btnValue => {
+                    if (btnValue === '') return;
+                    
+                    const button = document.createElement('button');
+                    button.textContent = btnValue;
+                    button.className = getButtonClass(btnValue);
+                    button.setAttribute('aria-label', getAriaLabel(btnValue));
+                    
+                    button.addEventListener('click', () => {
+                        handleOperation(btnValue);
+                    });
+                    
+                    elements.buttonsGrid.appendChild(button);
+                });
+            });
+        }
+
+        function getButtonClass(value) {
+            if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(value)) {
+                return 'button number';
+            } else if (['+', '−', '×', '÷', '='].includes(value)) {
+                return value === '=' ? 'button equals' : 'button operator';
+            } else if (['C', '⌫'].includes(value)) {
+                return value === 'C' ? 'button clear' : 'button delete';
+            } else {
+                return 'button function';
+            }
+        }
+
+        function getAriaLabel(value) {
+            const labels = {
+                'C': 'Limpar tudo',
+                '⌫': 'Apagar último caractere',
+                '±': 'Mudar sinal',
+                '%': 'Percentual',
+                '=': 'Igual',
+                'π': 'Pi',
+                'e': 'Constante de Euler',
+                '√': 'Raiz quadrada',
+                'x²': 'Elevado ao quadrado',
+                'xʸ': 'Potência',
+                'log': 'Logaritmo base 10',
+                'ln': 'Logaritmo natural',
+                'sin': 'Seno',
+                'cos': 'Cosseno',
+                'tan': 'Tangente',
+                '!': 'Fatorial'
+            };
+            return labels[value] || value;
+        }
+
+        function handleOperation(value) {
+            switch (state.currentProfile) {
+                case 'basic':
+                    handleBasicOperation(value);
+                    break;
+                case 'scientific':
+                    handleScientificOperation(value);
+                    break;
+                case 'financial':
+                    handleFinancialOperation(value);
+                    break;
+                case 'statistical':
+                    handleStatisticalOperation(value);
+                    break;
+            }
+        }
+
+        // ==================================================
+        // GERENCIAMENTO DE TEMA
+        // ==================================================
+
+        function toggleTheme() {
+            state.isDarkTheme = !state.isDarkTheme;
+            document.body.classList.toggle('theme-light', !state.isDarkTheme);
+            elements.themeToggle.textContent = state.isDarkTheme ? '🌓 Tema' : '🌙 Escuro';
+        }
+
+        // ==================================================
+        // SUPORTE A TECLADO
+        // ==================================================
+
+        function handleKeyboardInput(event) {
+            // Previne comportamento padrão para teclas de cálculo
+            const calcKeys = ['0','1','2','3','4','5','6','7','8','9','+','-','*','/','.','=','Enter','Escape','Backspace'];
+            if (calcKeys.includes(event.key)) {
+                event.preventDefault();
+            }
+            
+            // Mapeamento de teclas
+            const keyMap = {
+                '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
+                '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+                '.': '.', '+': '+', '-': '−', '*': '×', '/': '÷',
+                'Enter': '=', 'Escape': 'C', 'Backspace': '⌫'
+            };
+            
+            const mappedKey = keyMap[event.key];
+            if (mappedKey) {
+                handleOperation(mappedKey);
+            }
+        }
+
+        // ==================================================
+        // INICIALIZAÇÃO
+        // ==================================================
+
+        // Event listeners para botões de perfil
+        elements.profileButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                switchProfile(btn.dataset.profile);
+            });
+        });
+
+        // Event listener para tema
+        elements.themeToggle.addEventListener('click', toggleTheme);
+
+        // Event listener para teclado
+        document.addEventListener('keydown', handleKeyboardInput);
+
+        // Inicializa com perfil básico
+        generateButtons();
+        updateDisplay();
+    </script>
+</body>
+</html>
