@@ -2,7 +2,7 @@
 
 Uma calculadora web avançada com quatro modos especializados: **Básica**, **Científica**, **Financeira** e **Estatística** — tudo em um único arquivo HTML, sem dependências externas.
 
-![Calculadora Multi-Perfil](https://dcugleer.github.io/assets/images/screenshot.png)
+![Calculadora Multi-Perfil](assets/images/screenshots.png)
 
 ## 🌟 Recursos por Perfil
 
